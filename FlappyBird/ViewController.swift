@@ -24,6 +24,8 @@ class ViewController: UIViewController {
         let scene = GameScene(size:skView.frame.size)
         //ビューにシーンを表示する
         skView.presentScene(scene)
+        //physicsBodyの範囲を目で見えるようにするコード↓
+//        skView.showsPhysics = true
     }
     //ステータスバーを消す
     override var prefersStatusBarHidden: Bool {
