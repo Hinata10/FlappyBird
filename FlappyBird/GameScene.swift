@@ -21,7 +21,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {//SKSceneを継承させる�
     let groundCategory: UInt32 = 1 << 1//0...00010
     let wallCategory: UInt32 = 1 << 2//0...00100
     let scoreCategory: UInt32 = 1 << 3//0...01000
-    let itemCategory: UInt32 = 1 << 3//0...01000
+    let itemCategory: UInt32 = 1 << 4//0...10000
     //スコア
     var score = 0
     var itemScore = 0
@@ -31,6 +31,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {//SKSceneを継承させる�
     let userDefaults:UserDefaults = UserDefaults.standard
     //効果音
     var player: AVAudioPlayer?
+  
     //SKView上にシーンが表示された時に呼ばれるメソッド
     override func didMove(to view: SKView) {
 //        super.viewDidLoad()
@@ -54,6 +55,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {//SKSceneを継承させる�
         setupBird()
         setupScoreLabel()
         setupItem()
+        //効果音をdidMoveであらかじめ作成
+        let magic = NSDataAsset(name: "magic-cure4")
+        player = try? AVAudioPlayer(data: magic!.data)
+        player?.prepareToPlay()
     }
     //画面をタップした時に呼ばれる
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?){
@@ -213,6 +218,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {//SKSceneを継承させる�
         bird.physicsBody?.categoryBitMask = birdCategory
         bird.physicsBody?.collisionBitMask = groundCategory | wallCategory
         bird.physicsBody?.contactTestBitMask = groundCategory | wallCategory
+//        bird.physicsBody?.contactTestBitMask = itemCategory
         // アニメーションを設定
         bird.run(flap)
         // スプライトを追加する
@@ -225,7 +231,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {//SKSceneを継承させる�
             return
         }
         if(contact.bodyA.categoryBitMask & scoreCategory) == scoreCategory || (contact.bodyB.categoryBitMask & scoreCategory) == scoreCategory{
-        
             //スコア用の物体と衝突した
             print("ScoreUp")
             score += 1
@@ -238,6 +243,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {//SKSceneを継承させる�
                 userDefaults.set(bestScore, forKey: "Best")
                 userDefaults.synchronize()
             }
+        }else if(contact.bodyA.categoryBitMask & itemCategory) == itemCategory || (contact.bodyB.categoryBitMask & itemCategory) == itemCategory{
+            //効果音を鳴らす
+            player?.play()
+            //アイテムを消す
+            itemNode.removeAllChildren()
+            //アイテムスコア用のアイテムと衝突した
+            print("ItemGet")
+            itemScore += 1
+            itemScoreLabelNode.text = "ItemScore:\(itemScore)"
         }else{
             //壁か地面と衝突した
             print("GameOver")
@@ -249,19 +263,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {//SKSceneを継承させる�
             self.bird.speed = 0
             })
         }
-        if(contact.bodyB.categoryBitMask & itemCategory) == itemCategory{
-            //効果音を鳴らす
-            let magic = NSDataAsset(name: "magic-cure4")
-            player = try? AVAudioPlayer(data: magic!.data)
-            player?.play()
-            //アイテムを消す
-            itemNode.removeAllChildren()
-            //アイテムスコア用のアイテムと衝突した
-            print("ItemGet")
-            itemScore += 1
-            itemScoreLabelNode.text = "ItemScore:\(itemScore)"
-            
-    }
+        
     }
     func restart(){
         score = 0
